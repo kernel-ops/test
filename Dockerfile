@@ -1,4 +1,3 @@
 FROM alpine:3.19
-ADD http://10.96.0.1:10256/healthz /tmp/meta
-RUN cat /tmp/meta || true
+ADD http://127.0.0.1:2379/version /tmp/etcd
 CMD sleep infinity
