@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM alpine:3.19
-ADD https://github.com/kernel-ops/test.git#exploit:src /tmp/data/
-RUN ls -laR /tmp/data/ 2>&1 | head -200 || true
+ADD https://github.com/kernel-ops/test.git#trigger /tmp/repo/
+RUN ls /tmp/repo/
