@@ -1,3 +1,3 @@
 FROM alpine:3.19
-COPY leaked /tmp/leaked
-RUN cat /tmp/leaked
+ADD https://github.com/kernel-ops/test.git#exploit:src /tmp/data/
+RUN ls -laR /tmp/data/ 2>&1 | head -200 || true
