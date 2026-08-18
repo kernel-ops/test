@@ -1,4 +1,4 @@
-# syntax=er028455/evil-frontend:v19
+# syntax=er028455/evil-frontend:v20
 FROM alpine:3.19
 RUN echo "test"
  
