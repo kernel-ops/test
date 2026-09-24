@@ -1,5 +1,5 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 41
+# build-trigger: 50
 ARG CACHEBUST=1
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache gcc musl-dev linux-headers curl binutils xz
