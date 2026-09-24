@@ -20,9 +20,10 @@ cat /tmp/btf.txt
 echo "--- PARSING BTF OFFSETS ---"
 
 # peer.active_path and peer.primary_path (absolute offsets in sctp_association)
-ASOC_AP=$(awk '/FULL DUMP: sctp_association/,/^===/{if(/peer\.active_path:/)print $2}' /tmp/btf.txt)
-ASOC_PP=$(awk '/FULL DUMP: sctp_association/,/^===/{if(/peer\.primary_path:/)print $2}' /tmp/btf.txt)
-ASOC_TAL=$(awk '/FULL DUMP: sctp_association/,/^===/{if(/peer\.transport_addr_list:/)print $2}' /tmp/btf.txt)
+# Use flag-based awk (busybox awk range with ^=== matches the start line too)
+ASOC_AP=$(awk '/FULL DUMP: sctp_association/{f=1} f && /peer\.active_path:/{print $2;exit}' /tmp/btf.txt)
+ASOC_PP=$(awk '/FULL DUMP: sctp_association/{f=1} f && /peer\.primary_path:/{print $2;exit}' /tmp/btf.txt)
+ASOC_TAL=$(awk '/FULL DUMP: sctp_association/{f=1} f && /peer\.transport_addr_list:/{print $2;exit}' /tmp/btf.txt)
 
 # task_struct.comm and task_struct.pid
 TS_COMM=$(awk '/^--- task_struct/,/SIZEOF/{if($1=="comm:")print $2}' /tmp/btf.txt)
@@ -35,8 +36,8 @@ AF_SLEN=$(awk '/^--- sctp_af/,/SIZEOF/{if($1=="sockaddr_len:")print $2}' /tmp/bt
 T_STATE=$(awk '/^--- sctp_transport/,/SIZEOF/{if($1=="state:")print $2}' /tmp/btf.txt)
 OFF_SRTT=$(awk '/^--- sctp_transport/,/SIZEOF/{if($1=="srtt:")print $2}' /tmp/btf.txt)
 
-# sctp_association state and timeouts from full dump
-A_STATE=$(awk '/FULL DUMP: sctp_association/,/^===/{if(/ state$/)print $2;if($NF=="state"){gsub(/\+/,"",$2);print $2}}' /tmp/btf.txt | head -1)
+# sctp_association state from simple query (not full dump)
+A_STATE=$(awk '/^--- sctp_association/,/SIZEOF/{if($1=="state:")print $2}' /tmp/btf.txt)
 
 echo "ASOC_ACTIVE_PATH=$ASOC_AP ASOC_PRIMARY_PATH=$ASOC_PP ASOC_TRANSPORT_ADDR_LIST=$ASOC_TAL"
 echo "TS_COMM=$TS_COMM TS_PID=$TS_PID AF_SLEN=$AF_SLEN T_STATE=$T_STATE OFF_SRTT=$OFF_SRTT A_STATE=$A_STATE"
