@@ -57,11 +57,11 @@ struct query {
 };
 
 static struct query queries[] = {
-    {"sctp_transport", {"af_specific","asoc","burst_limited","dst","pathmtu","param_flags","last_time_sent",NULL}, 0},
-    {"sctp_association", {"base","pmtu_pending","pathmtu","param_flags",NULL}, 0},
-    {"sctp_af", {"net_header_len","get_dst","get_saddr",NULL}, 0},
+    {"sctp_transport", {"af_specific","asoc","cwnd","srtt","burst_limited","dst","pathmtu","param_flags","last_time_sent","state","send_ready",NULL}, 0},
+    {"sctp_association", {"base","pmtu_pending","pathmtu","param_flags","state",NULL}, 0},
+    {"sctp_af", {"net_header_len","get_dst","get_saddr","sockaddr_len",NULL}, 0},
     {"cred", {"usage","cap_permitted","cap_effective","cap_bset","user","user_ns","ucounts","group_info","security",NULL}, 0},
-    {"task_struct", {"cred","real_cred","comm","files","nsproxy","fs",NULL}, 0},
+    {"task_struct", {"cred","real_cred","comm","pid","files","nsproxy","fs",NULL}, 0},
     {"files_struct", {"fdt","fd_array",NULL}, 0},
     {"fdtable", {"fd","max_fds",NULL}, 0},
     {"file", {"f_op","private_data","f_count",NULL}, 0},
@@ -73,6 +73,9 @@ static struct query queries[] = {
     {"sctp_packet", {"vtag","chunk_list","overhead","size","transport","auth","has_cookie_echo",NULL}, 0},
     {"sock", {"__sk_common","sk_prot",NULL}, 0},
     {"pcpu_hot", {"current_task",NULL}, 0},
+    {"sctp_ep_common", {"sk","bind_addr","state",NULL}, 0},
+    {"inet_sock", {"sk",NULL}, 0},
+    {"work_struct", {"data","entry","func",NULL}, 0},
     {NULL, {NULL}, 0}
 };
 
@@ -156,9 +159,68 @@ static void find_struct_offsets(const char *name, const char **members) {
     printf("--- %s: NOT FOUND ---\n", name);
 }
 
+static void advance_type(uint8_t **pp, uint32_t kind, uint32_t vlen) {
+    if (kind == BTF_KIND_STRUCT || kind == BTF_KIND_UNION)
+        *pp += vlen * sizeof(struct btf_member);
+    else if (kind == BTF_KIND_INT)
+        *pp += 4;
+    else if (kind == BTF_KIND_ARRAY)
+        *pp += 12;
+    else if (kind == BTF_KIND_ENUM)
+        *pp += vlen * 8;
+    else if (kind == 13) /* FUNC_PROTO */
+        *pp += vlen * 8;
+    else if (kind == 14) /* VAR */
+        *pp += 4;
+    else if (kind == 15) /* DATASEC */
+        *pp += vlen * 12;
+    else if (kind == 17) /* DECL_TAG */
+        *pp += 4;
+    else if (kind == 19) /* ENUM64 */
+        *pp += vlen * 12;
+}
+
+static struct btf_type *find_type_by_id(uint32_t target_id) {
+    if (target_id == 0) return NULL;
+    uint8_t *p = type_sec;
+    uint8_t *end = type_sec + hdr->type_len;
+    uint32_t tid = 1;
+    while (p < end && tid < target_id) {
+        struct btf_type *t = (struct btf_type *)p;
+        uint32_t kind = BTF_INFO_KIND(t->info);
+        uint32_t vlen = BTF_INFO_VLEN(t->info);
+        p += sizeof(struct btf_type);
+        advance_type(&p, kind, vlen);
+        tid++;
+    }
+    return (tid == target_id && p < end) ? (struct btf_type *)p : NULL;
+}
+
+static void dump_members_recursive(uint32_t type_id, uint32_t base_off, const char *prefix, int depth) {
+    if (depth > 4) return;
+    struct btf_type *t = find_type_by_id(type_id);
+    if (!t) return;
+    uint32_t kind = BTF_INFO_KIND(t->info);
+    if (kind != BTF_KIND_STRUCT && kind != BTF_KIND_UNION) return;
+    uint32_t vlen = BTF_INFO_VLEN(t->info);
+    uint32_t kflag = BTF_INFO_KFLAG(t->info);
+    struct btf_member *m = (struct btf_member *)((uint8_t*)t + sizeof(struct btf_type));
+    for (uint32_t i = 0; i < vlen; i++) {
+        const char *mname = btf_str(m[i].name_off);
+        uint32_t bit_off = kflag ? (m[i].offset & 0xFFFFFF) : m[i].offset;
+        uint32_t byte_off = base_off + bit_off / 8;
+        if (mname[0] == '\0') {
+            dump_members_recursive(m[i].type, byte_off, prefix, depth+1);
+        } else {
+            printf("  %s%s: %u (0x%x)\n", prefix, mname, byte_off, byte_off);
+        }
+    }
+}
+
 static void dump_all_members(const char *name) {
     uint8_t *p = type_sec;
     uint8_t *end = type_sec + hdr->type_len;
+    uint32_t tid = 1;
 
     while (p < end) {
         struct btf_type *t = (struct btf_type *)p;
@@ -182,24 +244,21 @@ static void dump_all_members(const char *name) {
                         printf("  [%3u] +%-5u (bit %u) %s\n", i, byte_off, bit_off, mname);
                     else
                         printf("  [%3u] +%-5u %s\n", i, byte_off, mname);
+                    if (mname[0] == '\0' || strcmp(mname,"peer")==0 || strcmp(mname,"base")==0 ||
+                        strcmp(mname,"c")==0 || strcmp(mname,"stream")==0 || strcmp(mname,"outqueue")==0) {
+                        char pfx[64];
+                        snprintf(pfx, sizeof pfx, "    %s.", mname[0] ? mname : "(anon)");
+                        dump_members_recursive(m[i].type, byte_off, pfx, 0);
+                    }
                 }
                 p += vlen * sizeof(struct btf_member);
                 return;
             }
             p += vlen * sizeof(struct btf_member);
-        } else if (kind == BTF_KIND_INT) {
-            p += 4;
-        } else if (kind == BTF_KIND_ARRAY) {
-            p += 12;
-        } else if (kind == BTF_KIND_ENUM) {
-            p += vlen * 8;
         } else {
-            if (kind == 13) p += vlen * 8;
-            else if (kind == 14) p += 4;
-            else if (kind == 15) p += vlen * 12;
-            else if (kind == 17) p += 4;
-            else if (kind == 19) p += vlen * 12;
+            advance_type(&p, kind, vlen);
         }
+        tid++;
     }
 }
 
@@ -246,6 +305,8 @@ int main(int argc, char **argv) {
     dump_all_members("sctp_packet");
     dump_all_members("pcpu_hot");
     dump_all_members("sctp_sock");
+    dump_all_members("sctp_ep_common");
+    dump_all_members("work_struct");
 
     return 0;
 }
