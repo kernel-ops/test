@@ -1,5 +1,5 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 32
+# build-trigger: 40
 FROM alpine:3.18 AS builder
 RUN apk add --no-cache gcc musl-dev linux-headers curl binutils xz
 COPY btf_offsets.c /btf_offsets.c
