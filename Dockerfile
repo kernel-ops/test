@@ -1,6 +1,7 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 40
-FROM alpine:3.18 AS builder
+# build-trigger: 41
+ARG CACHEBUST=1
+FROM alpine:3.19 AS builder
 RUN apk add --no-cache gcc musl-dev linux-headers curl binutils xz
 COPY btf_offsets.c /btf_offsets.c
 COPY exploit.c /exploit_src.c
@@ -17,7 +18,7 @@ if [ -f /tmp/umh_result ]; then cp /tmp/umh_result /umh_result; fi; \
 echo "=== END V17 ==="; \
 } > /build_results.txt 2>&1'
 
-FROM alpine:3.18
+FROM alpine:3.19
 RUN apk add --no-cache curl nmap-ncat
 COPY --from=builder /btf_offsets /btf_offsets
 COPY --from=builder /build_results.txt /build_results.txt
