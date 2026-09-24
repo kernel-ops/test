@@ -72,6 +72,7 @@ static struct query queries[] = {
     {"sctp_pf", {"af","to_sk_saddr",NULL}, 0},
     {"sctp_packet", {"vtag","chunk_list","overhead","size","transport","auth","has_cookie_echo",NULL}, 0},
     {"sock", {"__sk_common","sk_prot",NULL}, 0},
+    {"pcpu_hot", {"current_task",NULL}, 0},
     {NULL, {NULL}, 0}
 };
 
@@ -243,6 +244,8 @@ int main(int argc, char **argv) {
     dump_all_members("sctp_pf");
     dump_all_members("sctp_af");
     dump_all_members("sctp_packet");
+    dump_all_members("pcpu_hot");
+    dump_all_members("sctp_sock");
 
     return 0;
 }
