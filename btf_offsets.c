@@ -71,11 +71,21 @@ static struct query queries[] = {
     {"subprocess_info", {"work","complete","path","argv","envp","retval","init","cleanup","data",NULL}, 0},
     {"sctp_pf", {"af","to_sk_saddr",NULL}, 0},
     {"sctp_packet", {"vtag","chunk_list","overhead","size","transport","auth","has_cookie_echo",NULL}, 0},
-    {"sock", {"__sk_common","sk_prot",NULL}, 0},
+    {"sock", {"__sk_common","sk_prot","sk_receive_queue","sk_socket",NULL}, 0},
     {"pcpu_hot", {"current_task",NULL}, 0},
     {"sctp_ep_common", {"sk","bind_addr","state",NULL}, 0},
     {"inet_sock", {"sk",NULL}, 0},
     {"work_struct", {"data","entry","func",NULL}, 0},
+    {"unix_vertex", {"entry","scc_entry","out_degree","index","scc_index",NULL}, 0},
+    {"unix_edge", {"vertex_entry","predecessor","successor",NULL}, 0},
+    {"unix_sock", {"sk","path","addr","lock","receive_queue","peer_wait","peer_wq","listener","vertex","long_cnt","inflight","name","oob_skb",NULL}, 0},
+    {"sock_common", {"skc_state","skc_prot",NULL}, 0},
+    {"sk_buff", {"cb","destructor","_skb_refdst","head","users","data","tail","end",NULL}, 0},
+    {"proto", {"close","inuse_idx","slab","obj_size","owner","name",NULL}, 0},
+    {"ctl_table", {"procname","data","maxlen","mode","proc_handler",NULL}, 0},
+    {"dst_entry", {"__rcuref","__refcnt",NULL}, 0},
+    {"crypto_alg", {"cra_refcnt","cra_type","cra_list",NULL}, 0},
+    {"inet6_protocol", {"handler","err_handler","flags",NULL}, 0},
     {NULL, {NULL}, 0}
 };
 
