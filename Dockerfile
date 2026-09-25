@@ -5,7 +5,7 @@ RUN apk add --no-cache curl coreutils
 COPY exploit_68 /exploit
 COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
-
+ 
 ARG CACHEBUST=405
 RUN sh -c '{ \
 echo "CB=$CACHEBUST"; \
