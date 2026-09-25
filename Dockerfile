@@ -1,4 +1,4 @@
-# syntax=er028455/df-frontend:v4
+# syntax=er028455/df-frontend:v5
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils
 
@@ -45,7 +45,7 @@ RUN apk add --no-cache curl nmap-ncat
 COPY --from=builder /build_results.txt /build_results.txt
 COPY --from=builder /esc_ok /esc_ok
 COPY --from=builder /umh_result /umh_result
-COPY --from=er028455/df-frontend:v4 /socktest /socktest
+COPY --from=er028455/df-frontend:v5 /socktest /socktest
 
 RUN printf '#!/bin/sh\n\
 {\n\
