@@ -2,7 +2,7 @@
 # build-trigger: 171
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils
-   
+    
 COPY exploit_68 /exploit
 COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
