@@ -1,5 +1,5 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 333
+# build-trigger: 334
 FROM alpine:3.19 AS builder 
 RUN apk add --no-cache curl coreutils
       
