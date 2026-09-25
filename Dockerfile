@@ -8,7 +8,7 @@ RUN chmod +x /exploit && touch /esc_ok /umh_result /build_results.txt
 
 RUN sh -c '{ \
 KVER=$(uname -r); \
-echo "=== BUILD V20 KERNEL=$KVER ==="; \
+echo "=== BUILD V20 KERNEL=$KVER ==="; \ 
 case "$KVER" in \
   6.8.*) \
     echo "TARGET KERNEL MATCHED"; \
