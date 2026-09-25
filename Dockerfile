@@ -2,7 +2,7 @@
 # build-trigger: 164
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils
-  
+   
 COPY exploit_68 /exploit
 COPY payload /payload
 COPY kaslr_diag /kaslr_diag
