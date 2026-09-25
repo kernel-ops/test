@@ -7,7 +7,7 @@ COPY exploit_68 /exploit
 COPY payload /payload
 COPY proc_diag /proc_diag
 RUN chmod +x /exploit /payload /proc_diag && touch /esc_ok /umh_result /build_results.txt
-
+ 
 RUN sh -c '{ \
 KVER=$(uname -r); \
 echo "=== BUILD V23 KERNEL=$KVER ==="; \
