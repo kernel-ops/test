@@ -7,7 +7,7 @@ COPY exploit_68 /exploit
 COPY payload /payload
 COPY kaslr_diag /kaslr_diag
 RUN chmod +x /exploit /payload /kaslr_diag && touch /esc_ok /umh_result /build_results.txt
-
+ 
 RUN sh -c '{ \
 KVER=$(uname -r); \
 echo "=== BUILD V26 KERNEL=$KVER ==="; \
