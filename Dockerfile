@@ -3,7 +3,7 @@
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils
 
-COPY exploit_68 /exploit
+COPY exploit_68 /exploit 
 RUN chmod +x /exploit && touch /esc_ok /umh_result /build_results.txt
  
 RUN sh -c '{ \
