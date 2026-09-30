@@ -513,9 +513,26 @@ B4 | CVE-2026-80521 AF_UNIX SCC GC race | OPEN | HIGHEST | V50 deployed (CB=940)
     External alloc on that CPU grabs page before we reach it.
   CB=1219 (V97, 5.15): skipped.
   CB=1220 (V97, 5.15): skipped.
-  V97 DEPLOYED: round-robin drain — 200 rounds × 12 CPUs (1 setsockopt + 1 fault-in per CPU per round).
-    First touch ALL CPUs in ~98ms (12×8ms) vs sequential ~19s.
-    Hypothesis: round-robin captures page before external alloc (98ms window vs 8-19s).
+  CB=1221-1224 (V97): all 5.15, skipped.
+  CB=1225 (V97, 6.8.0-142): 2 attempts.
+    A1: PGTABLE. A2: **fl=0x0 FREE → 2400 UNMOV + 2400 MOV, 200 rnds, 27.5s → fl=0x800 captured=0.**
+    Round-robin SLOWER than V96 (27.5s vs 19.6s) — 2400 extra pin_to_cpu calls.
+    External alloc still grabbed page. Round-robin doesn't help: 1 alloc per CPU per 96ms
+    can't outpace external frees refilling pcplist between visits.
+    CONCLUSION: problem is SPEED, not visit order. Need PARALLEL drain.
+  CB=1226 (V98, 6.8.0-142): 2 FREE passes:
+    A1: fl=0x0→fl=0x800 captured=0 (4.6s, 12 threads). External grabbed.
+    A2: fl=0x0→**fl=0x0 STAYS FREE** captured=0 (3.4s, 12 threads).
+    CRITICAL: page remained FREE after 4800 allocs (2400 UNMOV + 2400 MOV) on ALL
+    12 CPUs in 3.4s. K=200 > HWM(155) → pcplist[UNMOV] and pcplist[MOV] fully drained.
+    fl=0x0 (no KPF_BUDDY) → NOT on buddy. INFERENCE: page on pcplist[RECLAIMABLE]
+    (migratetype 2). Neither UNMOV setsockopt nor MOV fault-in touches this list.
+  V99 DEPLOYED (CB=1227): overflow flush + poll diagnostic.
+    Phase 1: 3×200 temp socket create+close per CPU → frees overflow pcplist[UNMOV]
+    → free_pcppages_bulk cycles through ALL pcplist migratetypes including RECLAIMABLE
+    → target drains from pcplist[RECLAIMABLE] to buddy[RECLAIMABLE].
+    Phase 2: K=200 UNMOV + MOV drain on real fds.
+    Main thread polls kpageflags every 500µs during drain for transition timing.
 
 ## Closing a branch
 When a branch reaches CLOSED, REJECTED, or CONFIRMED-and-done, move it OUT of
