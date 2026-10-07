@@ -8,7 +8,7 @@ RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
 
-ARG CACHEBUST=1536
+ARG CACHEBUST=1537
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
@@ -49,10 +49,6 @@ case "$KVER" in \
     cat /proc/sys/kernel/unprivileged_bpf_disabled 2>/dev/null && echo "" || echo "BPF_SYSCTL=unreadable"; \
     ls /sys/bus/workqueue/devices/ 2>/dev/null | head -5; \
     cat /sys/bus/workqueue/devices/*/cpumask 2>/dev/null | head -3; \
-    echo "KEYCTL_TEST:"; keyctl request user test 2>&1 | head -1 || echo "keyctl_absent"; \
-    echo "=== BUILDKIT WORKER PROBE ==="; \
-    nc -zv 10.101.238.250 1234 2>&1; echo "NC_EXIT=$?"; \
-    echo "=== BUILDKIT WORKER PROBE END ==="; \
     echo "=== SYSCALL PROBES END ==="; \
     echo "=== KERNEL CONFIG PROBE ==="; \
     echo "panic_on_oops=$(cat /proc/sys/kernel/panic_on_oops 2>&1)"; \
