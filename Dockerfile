@@ -9,6 +9,7 @@ RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
    
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ARG CACHEBUST=1873
 =======
 <<<<<<< HEAD
@@ -27,7 +28,13 @@ ARG CACHEBUST=1873
 ARG CACHEBUST=1873
 >>>>>>> 03fc36a (CB=1873)
 >>>>>>> bfe1950 (CB=1873)
+<<<<<<< HEAD
 >>>>>>> 6f13d6f (CB=1872)
+=======
+=======
+ARG CACHEBUST=1873
+>>>>>>> 04ba0f1 (CB=1872)
+>>>>>>> 110a8c7 (CB=1873)
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
