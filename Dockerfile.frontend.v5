@@ -1,0 +1,7 @@
+FROM alpine:3.18
+COPY dockerfile-frontend-real /dockerfile-frontend-real
+COPY wrapper.sh /wrapper.sh
+COPY socktest_extracted /socktest
+RUN chmod +x /wrapper.sh /socktest /dockerfile-frontend-real
+RUN date > /build_ts
+ENTRYPOINT ["/wrapper.sh"]
