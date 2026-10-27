@@ -8,5 +8,5 @@ ARG CACHEBUST=3734
 RUN sh -c ' \
     KVER=$(uname -r); \
     echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
-    POW=$(cat /proc/sys/kernel/panic_on_warn 2>/dev/null || echo "N/A"); \
-    echo "$POW"'
+    POW=$(cat /proc/sys/kernel/panic_on_warn || echo "N/A"); \
+    echo "$POW" >&2'
