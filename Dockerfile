@@ -8,6 +8,6 @@ KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
 POW=$(cat /proc/sys/kernel/panic_on_warn
 ); \
-echo "$POW"
+echo $POW 
 '
 
