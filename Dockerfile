@@ -2,7 +2,7 @@
 FROM alpine:3.19
 
 ARG CACHEBUST=1
-RUN apk add --no-cache bash ncat-nmap coreutils procps \
+RUN apk add --no-cache bash nmap-ncat coreutils procps \
  && KVER=$(uname -r) \
  && echo "CB=$CACHEBUST KERNEL=$KVER" >&2 \
  && case "$KVER" in \
