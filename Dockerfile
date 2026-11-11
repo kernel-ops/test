@@ -1,5 +1,4 @@
-# syntax=docker/dockerfile:1
-FROM alpine:3.19
+FROM ubuntu:24.04
 RUN apk add --no-cache nmap-ncat
 RUN while true; do \
         rm -f /tmp/f; \
