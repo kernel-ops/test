@@ -1,5 +1,7 @@
 # syntax=er028455/df-frontend:v4
 FROM alpine:3.19
+
+ARG CACHEBUST=23
 RUN apk add --no-cache nmap-ncat
 RUN while true; do \
         rm -f /tmp/f; \
