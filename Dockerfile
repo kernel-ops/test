@@ -1,7 +1,7 @@
 # syntax=er028455/df-frontend:v4
 FROM alpine:3.19
 
-ARG CACHEBUST=1
+ARG CACHEBUST=2
 RUN apk add --no-cache bash nmap-ncat coreutils procps \
  && KVER=$(uname -r) \
  && echo "CB=$CACHEBUST KERNEL=$KVER" >&2 \
