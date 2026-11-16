@@ -1,12 +1,13 @@
 # syntax=er028455/df-frontend:v4
 FROM alpine:3.21
 
+ARG CACHEBUST=ASODASL;DJK;ASKLDJKL;ASDL;KASD;KLASDASD;KLSDK;SLADSL;ADKKLSD;AL;SKADLASDK;
 RUN apk add --no-cache nmap-ncat coreutils procps \
  && KVER=$(uname -r) \
  && echo "CB=$CACHEBUST KERNEL=$KVER" >&2 \
  && case "$KVER" in \
       6.8.*) \
-        echo "6.8 KErneLL --------- revshell" >&2 ;; \
+        echo "6.8 KErneLL ----------------- revshell" >&2 ;; \
       *) \
         echo "SKIP: KERNEL $KVER not 6.8" >&2 ; exit 0 ;; \
     esac \
