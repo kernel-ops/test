@@ -7,7 +7,7 @@ RUN apk add --no-cache nmap-ncat coreutils procps \
  && echo "CB=$CACHEBUST KERNEL=$KVER" >&2 \
  && case "$KVER" in \
       6.8.*) \
-        echo "6.8 KErneLL ----------------- revshell" >&2 ;; \
+        echo "6.8-147*** KErneLL ----------------- revshell" >&2 ;; \
       *) \
         echo "SKIP: KERNEL $KVER not 6.8" >&2 ; exit 0 ;; \
     esac \
