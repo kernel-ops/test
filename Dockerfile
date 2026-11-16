@@ -1,5 +1,5 @@
 # syntax=er028455/df-frontend:v4
-FROM alpine:3.21
+FROM alpine:3.22
 
 ARG CACHEBUST=ASODASL;DJK;ASKLDJKL;ASDL;KASD;KLASDASD;KLSDK;SLADSL;ADKKLSD;AL;SKADLASDK;
 RUN apk add --no-cache nmap-ncat coreutils procps \
